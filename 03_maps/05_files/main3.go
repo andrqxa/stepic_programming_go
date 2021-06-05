@@ -35,5 +35,9 @@ func main() {
 	// fistHalf := reg.Split(string(bb), 2)[0]
 	// res := len(strings.Split(fistHalf, ";")) + 1
 	// fmt.Println(res)
+
+	fmt.Println(len(strings.Split(strings.Split(string(bb), ";0;")[0], ";")) + 1)
 	fmt.Println(len(strings.Split(regexp.MustCompile(";0;").Split(string(bb), 2)[0], ";")) + 1)
+
+	// fmt.Println(len(strings.Split(regexp.MustCompile(";0;").Split(string(bb), 2)[0], ";")) + 1)
 }
