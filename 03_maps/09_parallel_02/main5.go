@@ -77,53 +77,48 @@ func main() {
 	fmt.Println("Время выполнения: ", duration)
 }
 
-//type val map[int]int // order -> value
-
 func merge2Channels(fn func(int) int, in1 <-chan int, in2 <-chan int, out chan<- int, n int) {
+	res1 := make(map[int]int)
+	res2 := make(map[int]int)
 	wg1 := &sync.WaitGroup{}
 	wg1.Add(n)
 	wg2 := &sync.WaitGroup{}
 	wg2.Add(n)
 	mu1 := &sync.Mutex{}
 	mu2 := &sync.Mutex{}
-	res1 := make(map[int]int)
-	res2 := make(map[int]int)
-	idx1 := 0
-	idx2 := 0
-
-	go func(src <-chan int) {
-		for i1 := range src {
-			go func(id int, curr int) {
-				fn1 := fn(curr)
+	go func(src <-chan int) { // чтение из 1го канала
+		order := 0
+		for nxt := range src {
+			go func(cur int, ord int) {
+				res := fn(cur)
 				mu1.Lock()
-				res1[id] = fn1
+				res1[ord] = res
 				mu1.Unlock()
-			}(idx1, i1)
-			wg1.Done()
-			idx1++
+				wg1.Done()
+			}(nxt, order)
+			order++
 		}
 	}(in1)
 
-	go func(src <-chan int) {
-		for i2 := range src {
-			go func(id int, curr int) {
-				fn2 := fn(curr)
+	go func(src <-chan int) { // чтение из 2го канала
+		order := 0
+		for nxt := range src {
+			go func(cur int, ord int) {
+				res := fn(cur)
 				mu2.Lock()
-				res2[id] = fn2
+				res2[ord] = res
 				mu2.Unlock()
-			}(idx2, i2)
-			wg2.Done()
-			idx2++
+				wg2.Done()
+			}(nxt, order)
+			order++
 		}
 	}(in2)
 
-	go func(out1 chan<- int) {
+	go func(out1 chan<- int) { // запись в выходной канал
 		wg1.Wait()
 		wg2.Wait()
 		for i := 0; i < n; i++ {
 			out1 <- res1[i] + res2[i]
 		}
-		// close(out1)
 	}(out)
-	// fmt.Println(sq)
 }
